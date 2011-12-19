@@ -10,6 +10,9 @@
 (def silkscreen-width-small 50)
 (def ^:dynamic *silkscreen-width* silkscreen-width-small)
 
+(def text-size-small 250)
+(def ^:dynamic *text-size* text-size-small)
+
                                         ; Grid and point related operations
 (defn div-to-int [& args]
   (int (apply / args)))
@@ -84,9 +87,9 @@
          (escaped-utf8 text))))
 
 (defn make-text-reference [pos-xy text]
-  (TexteModule. "0" pos-xy 394 394 0 99 false false 21 false text))
+  (TexteModule. "0" pos-xy *text-size* *text-size* 0 *silkscreen-width* false false 21 false text))
 (defn make-text-value [pos-xy text]
-  (TexteModule. "1" pos-xy 394 394 0 99 false false 21 false text))
+  (TexteModule. "1" pos-xy *text-size* *text-size* 0 *silkscreen-width* false false 21 false text))
 
 
                                         ; EDGE_MODULE::Save
@@ -119,6 +122,9 @@
          width " "
          layer)))
 
+(defn make-circle [layer width start-xy end-xy]
+  (Circle. layer width start-xy end-xy))
+
 (defrecord Arc [layer width
                 start-xy
                 end-xy
@@ -133,6 +139,9 @@
          angle " "
          width " "
          layer)))
+
+(defn make-arc [layer width start-xy end-xy angle]
+  (Arc. layer width start-xy end-xy angle))
 
 (defrecord Polygon [layer width
                     start-xy
@@ -153,6 +162,9 @@
       (fn [x y] (str "Dl " x " " y))
       points))))
 
+(defn make-polygon [layer width start-xy end-xy points]
+  (Polygon. layer width start-xy end-xy points))
+
 (defrecord Pad [shape size-x size-y delta-x delta-y
                 drill-shape drill-x drill-y offset-x offset-y
                 attribut layer-mask orientation net net-name
@@ -161,7 +173,7 @@
   (output [this]
     (list
      (str "$PAD")
-     (str "Sh " m-name " "
+     (str "Sh " (escaped-utf8 m-name) " "
           shape " "
           size-x " "
           size-y " "
@@ -177,6 +189,18 @@
      (str "Ne " net " " (escaped-utf8 net-name))
      (str "Po " (first pos-xy) " " (second pos-xy))
      "$EndPAD")))
+
+(defn make-pad [shape size-x size-y delta-x delta-y
+                drill-shape drill-x drill-y offset-x offset-y
+                attribut layer-mask orientation net net-name
+                m-name pos-xy]
+  (Pad. shape size-x size-y delta-x delta-y
+        drill-shape drill-x drill-y offset-x offset-y
+        attribut layer-mask orientation net net-name
+        m-name pos-xy))
+
+(defn get-pad-by-name [pads p-name]
+  (first (filter #(= (:m-name %) p-name) pads)))
 
 
                                         ; MODULE::Write_3D_Descr
@@ -213,15 +237,8 @@
      (output s3d)
      (str "$EndMODULE  " m-name))))
 
-(defn write-library [file library]
-  (spit file
-        (with-out-str
-          (doall
-           (map println
-                (flatten
-                 (output library)))))))
-
 ;; returns the four points outside a given pad taking line width into account
+;; goes from quadrant 1 (+,+) to quadrant 4 (+,-) ccw (increasing math angle)
 (defn corners-outside-pad [pad line-width]
   (let [pos-xy (:pos-xy pad)
         width (:size-x pad)
@@ -232,17 +249,17 @@
     (map round-point-to-grid-down
          (list
           (point-add pos-xy
-                     [(- half-width) (+ half-height)]
-                     [(- half-line-width) (+ half-line-width)])
-          (point-add pos-xy
                      [(+ half-width) (+ half-height)]
                      [(+ half-line-width) (+ half-line-width)])
           (point-add pos-xy
-                     [(+ half-width) (- half-height)]
-                     [(+ half-line-width) (- half-line-width)])
+                     [(- half-width) (+ half-height)]
+                     [(- half-line-width) (+ half-line-width)])
           (point-add pos-xy
                      [(- half-width) (- half-height)]
-                     [(- half-line-width) (- half-line-width)])))))
+                     [(- half-line-width) (- half-line-width)])
+          (point-add pos-xy
+                     [(+ half-width) (- half-height)]
+                     [(+ half-line-width) (- half-line-width)])))))
 
 (defn footprint-sm [m-name length width gap]
   (let [pad-height (round-to-grid width)
@@ -263,16 +280,35 @@
        m-name
        (make-text-reference [0 0] m-name)
        (make-text-value [0 0] "VAL**")
-       (map (partial make-segment 21 *silkscreen-width*)
-            (corners-outside-pad (first pads) *silkscreen-width*))
+       (let [points-around-pad-1 (cycle (corners-outside-pad
+                                         (get-pad-by-name pads "1")
+                                         *silkscreen-width*))
+             points-around-pad-2 (cycle (corners-outside-pad
+                                         (get-pad-by-name pads "2")
+                                         *silkscreen-width*))]
+         (concat
+          (map (partial make-segment 21 *silkscreen-width*)
+               (take 3 points-around-pad-1)
+               (take 3 (drop 1 points-around-pad-1)))
+          (map (partial make-segment 21 *silkscreen-width*)
+               (take 3 (drop 2 points-around-pad-2))
+               (take 3 (drop 3 points-around-pad-2)))))
        pads
-       (S3DMaster. "smd/chip_cms.wrl" 0.05)))))
+       (S3DMaster. "smd/chip_cms.wrl" 0.05))))) ;; FIXME
+
+(defn write-library [file library]
+  (spit file
+        (with-out-str
+          (doall
+           (map println
+                (flatten
+                 (output library)))))))
 
 (defn -main [& args]
   (write-library "junk/my-lib.mod"
                  (Library.
                   (list
-                   (footprint-sm "SM0805" 1100 550 400)))))
+                   (footprint-sm "SM0805-GS" 1100 550 400)))))
 
 ;; (Module.
 ;;  "QFN24"
