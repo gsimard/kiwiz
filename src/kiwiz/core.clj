@@ -7,7 +7,8 @@
 (def grid-size-smallest 5) ;; units are decimils (5 = 1/2 mil)
 (def ^:dynamic *grid-size* grid-size-smallest)
 
-(def ^:dynamic *silkscreen-width-small* 50)
+(def silkscreen-width-small 50)
+(def ^:dynamic *silkscreen-width* silkscreen-width-small)
 
                                         ; Grid and point related operations
 (defn div-to-int [& args]
@@ -101,6 +102,9 @@
          (second end-xy) " "
          width " "
          layer)))
+
+(defn make-segment [layer width start-xy end-xy]
+  (Segment. layer width start-xy end-xy))
 
 (defrecord Circle [layer width
                    start-xy
@@ -240,31 +244,29 @@
                      [(- half-width) (- half-height)]
                      [(- half-line-width) (- half-line-width)])))))
 
-
-
 (defn footprint-sm [m-name length width gap]
   (let [pad-height (round-to-grid width)
         pad-width (round-to-grid (div-to-int (- length gap) 2))
         pad-offset (round-to-grid (div-to-int (+ pad-width gap) 2))]
-    (Module.
-     m-name
-     (make-text-reference [0 0] m-name)
-     (make-text-value [0 0] "VAL**")
-     (list
-      (Segment. 79 21 [0 0] [100 100])
-      (Segment. 59 21 [100 100] [200 100]))
-     (list
-      (Pad. "R" pad-width pad-height 0 0
-            "C" 0 0 0 0
-            "SMD" "00888000"
-            0 0 ""
-            "1" [(- pad-offset) 0])
-      (Pad. "R" pad-width pad-height 0 0
-            "C" 0 0 0 0
-            "SMD" "00888000"
-            0 0 ""
-            "2" [(+ pad-offset) 0]))
-     (S3DMaster. "smd/chip_cms.wrl" 0.05))))
+    (let [pads (list
+                (Pad. "R" pad-width pad-height 0 0
+                      "C" 0 0 0 0
+                      "SMD" "00888000"
+                      0 0 ""
+                      "1" [(- pad-offset) 0])
+                (Pad. "R" pad-width pad-height 0 0
+                      "C" 0 0 0 0
+                      "SMD" "00888000"
+                      0 0 ""
+                      "2" [(+ pad-offset) 0]))]
+      (Module.
+       m-name
+       (make-text-reference [0 0] m-name)
+       (make-text-value [0 0] "VAL**")
+       (map (partial make-segment 21 *silkscreen-width*)
+            (corners-outside-pad (first pads) *silkscreen-width*))
+       pads
+       (S3DMaster. "smd/chip_cms.wrl" 0.05)))))
 
 (defn -main [& args]
   (write-library "junk/my-lib.mod"
