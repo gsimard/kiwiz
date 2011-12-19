@@ -1,13 +1,13 @@
 # kiwiz
 
-FIXME: write description
+Footprint wizard for the KiCad project.
 
 ## Usage
 
-FIXME: write
+Does nothing right now.
 
 ## License
 
-Copyright (C) 2011 FIXME
+Copyright (C) 2011 Guillaume Simard
 
 Distributed under the Eclipse Public License, the same as Clojure.
