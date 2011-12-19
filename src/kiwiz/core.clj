@@ -3,7 +3,43 @@
 
 ;; date +"%a %d %b %Y %r %Z"
 (def ^:dynamic *footprint-library-header* "PCBNEW-LibModule-V1")
-(def ^:dynamic *grid-size-smallest* 5) ;; units are decimils (5 = 1/2 mil)
+
+(def grid-size-smallest 5) ;; units are decimils (5 = 1/2 mil)
+(def ^:dynamic *grid-size* grid-size-smallest)
+
+(def ^:dynamic *silkscreen-width-small* 50)
+
+                                        ; Grid and point related operations
+(defn div-to-int [& args]
+  (int (apply / args)))
+
+(defn point-add [& args]
+  [(apply + (map first args))
+   (apply + (map second args))])
+
+;; ie.: 30 remains 30, but 29 does down to 25
+(defn round-to-grid-down [n]
+  (- n (mod n *grid-size*)))
+
+;; ie.: 30 remains 30, but 31 goes to 35
+(defn round-to-grid-up [n]
+  (let [n (dec n)]
+  (+ n *grid-size* (- (mod n *grid-size*)))))
+
+(defn round-to-grid [n]
+  (round-to-grid-down n))
+
+(defn round-point-to-grid-down [[x y]]
+  [(round-to-grid-down x)
+   (round-to-grid-down y)])
+
+(defn round-point-to-grid-up [[x y]]
+  [(round-to-grid-up x)
+   (round-to-grid-up y)])
+
+(defn round-point-to-grid [xy]
+  (round-point-to-grid-down [xy]))
+
 
 (defn escaped-utf8 [s]
   (str "\"" s "\""))
@@ -181,27 +217,35 @@
                 (flatten
                  (output library)))))))
 
-;; ie.: 30 remains 30, but 31 goes to 35
-(defn round-to-grid-up [n]
-  (let [n (dec n)]
-  (+ n *grid-size-smallest* (- (mod n *grid-size-smallest*)))))
+;; returns the four points outside a given pad taking line width into account
+(defn corners-outside-pad [pad line-width]
+  (let [pos-xy (:pos-xy pad)
+        width (:size-x pad)
+        half-width (div-to-int width 2)
+        height (:size-y pad)
+        half-height (div-to-int height 2)
+        half-line-width (div-to-int line-width 2)]
+    (map round-point-to-grid-down
+         (list
+          (point-add pos-xy
+                     [(- half-width) (+ half-height)]
+                     [(- half-line-width) (+ half-line-width)])
+          (point-add pos-xy
+                     [(+ half-width) (+ half-height)]
+                     [(+ half-line-width) (+ half-line-width)])
+          (point-add pos-xy
+                     [(+ half-width) (- half-height)]
+                     [(+ half-line-width) (- half-line-width)])
+          (point-add pos-xy
+                     [(- half-width) (- half-height)]
+                     [(- half-line-width) (- half-line-width)])))))
 
-;; ie.: 30 remains 30, but 29 does down to 25
-(defn round-to-grid-down [n]
-  (- n (mod n *grid-size-smallest*)))
 
-(defn round-inward [[x y]]
-  [(round-to-grid-down x)
-   (round-to-grid-down y)])
 
-(defn round-outward [[x y]]
-  [(round-to-grid-up x)
-   (round-to-grid-up y)])
-
-(defn footprint-sm [m-name length width gap ]
-  (let [pad-width (round-to-grid width)
-        pad-length (round-to-grid (/ (- length gap) 2))
-        pad-offset (round-to-grid (/ (+ pad-length gap) 2))]
+(defn footprint-sm [m-name length width gap]
+  (let [pad-height (round-to-grid width)
+        pad-width (round-to-grid (div-to-int (- length gap) 2))
+        pad-offset (round-to-grid (div-to-int (+ pad-width gap) 2))]
     (Module.
      m-name
      (make-text-reference [0 0] name)
@@ -210,17 +254,17 @@
       (Segment. 0 0 100 100 79 21)
       (Segment. 100 100 200 100 59 21))
      (list
-      (Pad. "R" pad-length pad-width 0 0
+      (Pad. "R" pad-width pad-height 0 0
             "C" 0 0 0 0
             "SMD" "00888000"
             0 0 ""
-            "1" (- pad-offset) 0)
-      (Pad. "R" pad-length pad-width 0 0
+            "1" [(- pad-offset) 0])
+      (Pad. "R" pad-width pad-height 0 0
             "C" 0 0 0 0
             "SMD" "00888000"
             0 0 ""
-            "2" (+ pad-offset) 0))
-     (S3DMaster. "smd/chip_cms.wrl" 0.05)))
+            "2" [(+ pad-offset) 0]))
+     (S3DMaster. "smd/chip_cms.wrl" 0.05))))
 
 (defn -main [& args]
   (write-library "junk/my-lib.mod"
@@ -238,5 +282,5 @@
                            "C" 0 0 0 0
                            "SMD" "00888000"
                            0 0 ""
-                           "1" -787 -492))
+                           "1" [-787 -492]))
                     (S3DMaster. "smd/qfn24.wrl" 1.0))))))
