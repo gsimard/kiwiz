@@ -1,3 +1,4 @@
-(defproject kiwiz "1.0.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :dependencies [[org.clojure/clojure "1.2.1"]])
+(defproject kiwiz "0.0.1-SNAPSHOT"
+  :description "Footprint wizard for the KiCad project."
+  :dependencies [[org.clojure/clojure "1.2.1"]]
+  :main kiwiz.core)
