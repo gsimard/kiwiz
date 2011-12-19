@@ -5,6 +5,7 @@
 (def ^:dynamic *footprint-library-header* "PCBNEW-LibModule-V1")
 
 (def grid-size-smallest 5) ;; units are decimils (5 = 1/2 mil)
+(def grid-size-small 50)
 (def ^:dynamic *grid-size* grid-size-smallest)
 
 (def silkscreen-width-small 50)
@@ -43,6 +44,22 @@
 
 (defn round-point-to-grid [xy]
   (round-point-to-grid-down [xy]))
+
+(defn round-point-to-grid-outwards [[x y]]
+  [(if (>= x 0)
+     (round-to-grid-up x)
+     (round-to-grid-down x))
+   (if (>= y 0)
+     (round-to-grid-up y)
+     (round-to-grid-down y))])
+
+(defn round-point-to-grid-inwards [[x y]]
+  [(if (< x 0)
+     (round-to-grid-up x)
+     (round-to-grid-down x))
+   (if (< y 0)
+     (round-to-grid-up y)
+     (round-to-grid-down y))])
 
 
 (defn escaped-utf8 [s]
@@ -246,20 +263,19 @@
         height (:size-y pad)
         half-height (div-to-int height 2)
         half-line-width (div-to-int line-width 2)]
-    (map round-point-to-grid-down
-         (list
-          (point-add pos-xy
-                     [(+ half-width) (+ half-height)]
-                     [(+ half-line-width) (+ half-line-width)])
-          (point-add pos-xy
-                     [(- half-width) (+ half-height)]
-                     [(- half-line-width) (+ half-line-width)])
-          (point-add pos-xy
-                     [(- half-width) (- half-height)]
-                     [(- half-line-width) (- half-line-width)])
-          (point-add pos-xy
-                     [(+ half-width) (- half-height)]
-                     [(+ half-line-width) (- half-line-width)])))))
+    (list
+     (point-add pos-xy
+                [(+ half-width) (+ half-height)]
+                [(+ half-line-width) (+ half-line-width)])
+     (point-add pos-xy
+                [(- half-width) (+ half-height)]
+                [(- half-line-width) (+ half-line-width)])
+     (point-add pos-xy
+                [(- half-width) (- half-height)]
+                [(- half-line-width) (- half-line-width)])
+     (point-add pos-xy
+                [(+ half-width) (- half-height)]
+                [(+ half-line-width) (- half-line-width)]))))
 
 (defn footprint-sm [m-name length width gap]
   (let [pad-height (round-to-grid width)
@@ -280,19 +296,25 @@
        m-name
        (make-text-reference [0 0] m-name)
        (make-text-value [0 0] "VAL**")
-       (let [points-around-pad-1 (cycle (corners-outside-pad
-                                         (get-pad-by-name pads "1")
-                                         *silkscreen-width*))
-             points-around-pad-2 (cycle (corners-outside-pad
-                                         (get-pad-by-name pads "2")
-                                         *silkscreen-width*))]
-         (concat
-          (map (partial make-segment 21 *silkscreen-width*)
-               (take 3 points-around-pad-1)
-               (take 3 (drop 1 points-around-pad-1)))
-          (map (partial make-segment 21 *silkscreen-width*)
-               (take 3 (drop 2 points-around-pad-2))
-               (take 3 (drop 3 points-around-pad-2)))))
+       (binding [*grid-size* grid-size-small]
+         (doall
+          (let [points-around-pad-1 (cycle
+                                     (map round-point-to-grid-outwards
+                                          (corners-outside-pad
+                                           (get-pad-by-name pads "1")
+                                           *silkscreen-width*)))
+                points-around-pad-2 (cycle
+                                     (map round-point-to-grid-outwards
+                                          (corners-outside-pad
+                                           (get-pad-by-name pads "2")
+                                           *silkscreen-width*)))]
+            (concat
+             (map (partial make-segment 21 *silkscreen-width*)
+                  (take 3 points-around-pad-1)
+                  (take 3 (drop 1 points-around-pad-1)))
+             (map (partial make-segment 21 *silkscreen-width*)
+                  (take 3 (drop 2 points-around-pad-2))
+                  (take 3 (drop 3 points-around-pad-2)))))))
        pads
        (S3DMaster. "smd/chip_cms.wrl" 0.05))))) ;; FIXME
 
@@ -309,18 +331,3 @@
                  (Library.
                   (list
                    (footprint-sm "SM0805-GS" 1100 550 400)))))
-
-;; (Module.
-;;  "QFN24"
-;;  (make-text-reference 0 -1500 "QFN24")
-;;  (make-text-value 0 1500 "VAL**")
-;;  (list
-;;   (Segment. 0 0 100 100 79 21)
-;;   (Segment. 100 100 200 100 59 21))
-;;  (list
-;;   (Pad. "O" 315 98 0 0
-;;         "C" 0 0 0 0
-;;         "SMD" "00888000"
-;;         0 0 ""
-;;         "1" [-787 -492]))
-;;  (S3DMaster. "smd/qfn24.wrl" 1.0))
