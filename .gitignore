@@ -1,3 +1,7 @@
+junk/
+*~
+~*
+.#*
 pom.xml
 *jar
 /lib/
