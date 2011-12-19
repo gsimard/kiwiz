@@ -70,8 +70,8 @@
   Library-Printer
   (output [this]
     (str "T" typ " "
-         (0 pos-xy) " "
-         (1 pos-xy) " "
+         (first pos-xy) " "
+         (second pos-xy) " "
          size-y " "
          size-x " "
          orient " "
@@ -95,10 +95,10 @@
   Library-Printer
   (output [this]
     (str "DS "
-         (0 start-xy) " "
-         (1 start-xy) " "
-         (0 end-xy) " "
-         (1 end-xy) " "
+         (first start-xy) " "
+         (second start-xy) " "
+         (first end-xy) " "
+         (second end-xy) " "
          width " "
          layer)))
 
@@ -108,10 +108,10 @@
   Library-Printer
   (output [this]
     (str "DC "
-         (0 start-xy) " "
-         (1 start-xy) " "
-         (0 end-xy) " "
-         (1 end-xy) " "
+         (first start-xy) " "
+         (second start-xy) " "
+         (first end-xy) " "
+         (second end-xy) " "
          width " "
          layer)))
 
@@ -122,10 +122,10 @@
   Library-Printer
   (output [this]
     (str "DA "
-         (0 start-xy) " "
-         (1 start-xy) " "
-         (0 end-xy) " "
-         (1 end-xy) " "
+         (first start-xy) " "
+         (second start-xy) " "
+         (first end-xy) " "
+         (second end-xy) " "
          angle " "
          width " "
          layer)))
@@ -138,10 +138,10 @@
   (output [this]
     (list
      (str "DP "
-          (0 start-xy) " "
-          (1 start-xy) " "
-          (0 end-xy) " "
-          (1 end-xy) " "
+          (first start-xy) " "
+          (second start-xy) " "
+          (first end-xy) " "
+          (second end-xy) " "
           (count points) " "
           width " "
           layer)
@@ -171,7 +171,7 @@
           (if (= drill-shape 'O') (str " O " drill-x " " drill-y)))
      (str "At " attribut " N " layer-mask)
      (str "Ne " net " " (escaped-utf8 net-name))
-     (str "Po " (0 pos-xy) " " (1 pos-xy))
+     (str "Po " (first pos-xy) " " (second pos-xy))
      "$EndPAD")))
 
 
@@ -248,11 +248,11 @@
         pad-offset (round-to-grid (div-to-int (+ pad-width gap) 2))]
     (Module.
      m-name
-     (make-text-reference [0 0] name)
+     (make-text-reference [0 0] m-name)
      (make-text-value [0 0] "VAL**")
      (list
-      (Segment. 0 0 100 100 79 21)
-      (Segment. 100 100 200 100 59 21))
+      (Segment. 79 21 [0 0] [100 100])
+      (Segment. 59 21 [100 100] [200 100]))
      (list
       (Pad. "R" pad-width pad-height 0 0
             "C" 0 0 0 0
@@ -270,17 +270,19 @@
   (write-library "junk/my-lib.mod"
                  (Library.
                   (list
-                   (Module.
-                    "QFN24"
-                    (make-text-reference 0 -1500 "QFN24")
-                    (make-text-value 0 1500 "VAL**")
-                    (list
-                     (Segment. 0 0 100 100 79 21)
-                     (Segment. 100 100 200 100 59 21))
-                    (list
-                     (Pad. "O" 315 98 0 0
-                           "C" 0 0 0 0
-                           "SMD" "00888000"
-                           0 0 ""
-                           "1" [-787 -492]))
-                    (S3DMaster. "smd/qfn24.wrl" 1.0))))))
+                   (footprint-sm "SM0805" 1100 550 400)))))
+
+;; (Module.
+;;  "QFN24"
+;;  (make-text-reference 0 -1500 "QFN24")
+;;  (make-text-value 0 1500 "VAL**")
+;;  (list
+;;   (Segment. 0 0 100 100 79 21)
+;;   (Segment. 100 100 200 100 59 21))
+;;  (list
+;;   (Pad. "O" 315 98 0 0
+;;         "C" 0 0 0 0
+;;         "SMD" "00888000"
+;;         0 0 ""
+;;         "1" [-787 -492]))
+;;  (S3DMaster. "smd/qfn24.wrl" 1.0))
