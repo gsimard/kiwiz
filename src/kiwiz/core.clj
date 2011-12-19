@@ -4,7 +4,7 @@
 ;; date +"%a %d %b %Y %r %Z"
 (def ^:dynamic *footprint-library-header* "PCBNEW-LibModule-V1")
 (def ^:dynamic *lib-name* "my_lib")
-
+(def ^:dynamic *grid-size-smallest* 5) ;; units are decimils (5 = 1/2 mil)
 
 (defn escaped-utf8 [s]
   (str "\"" s "\""))
@@ -30,13 +30,13 @@
 
                                         ; TEXTE_MODULE::Save
 ;; size y and x really are in this order.
-(defrecord TexteModule [typ pos-x pos-y size-y size-x orient
+(defrecord TexteModule [typ pos-xy size-y size-x orient
                         thickness mirror noshow layer italic text]
   Library-Printer
   (output [this]
     (str "T" typ " "
-         pos-x " "
-         pos-y " "
+         (0 pos-xy) " "
+         (1 pos-xy) " "
          size-y " "
          size-x " "
          orient " "
@@ -47,56 +47,56 @@
          (if italic "I" "N") " "
          (escaped-utf8 text))))
 
-(defn make-text-reference [x y text]
-  (TexteModule. "0" x y 394 394 0 99 false false 21 false text))
-(defn make-text-value [x y text]
-  (TexteModule. "1" x y 394 394 0 99 false false 21 false text))
+(defn make-text-reference [xy text]
+  (TexteModule. "0" xy 394 394 0 99 false false 21 false text))
+(defn make-text-value [xy text]
+  (TexteModule. "1" xy 394 394 0 99 false false 21 false text))
 
 
                                         ; EDGE_MODULE::Save
-(defrecord Segment [start-x start-y
-                    end-x end-y
+(defrecord Segment [start-xy
+                    end-xy
                     width layer]
   Library-Printer
   (output [this]
     (str "DS "
-         start-x " "
-         start-y " "
-         end-x " "
-         end-y " "
+         (0 start-xy) " "
+         (1 start-xy) " "
+         (0 end-xy) " "
+         (1 end-xy) " "
          width " "
          layer)))
 
-(defrecord Circle [start-x start-y
-                    end-x end-y
-                    width layer]
+(defrecord Circle [start-xy
+                   end-xy
+                   width layer]
   Library-Printer
   (output [this]
     (str "DC "
-         start-x " "
-         start-y " "
-         end-x " "
-         end-y " "
+         (0 start-xy) " "
+         (1 start-xy) " "
+         (0 end-xy) " "
+         (1 end-xy) " "
          width " "
          layer)))
 
-(defrecord Arc [start-x start-y
-                end-x end-y
+(defrecord Arc [start-xy
+                end-xy
                 angle
                 width layer]
   Library-Printer
   (output [this]
     (str "DA "
-         start-x " "
-         start-y " "
-         end-x " "
-         end-y " "
+         (0 start-x) " "
+         (1 start-y) " "
+         (0 end-x) " "
+         (1 end-y) " "
          angle " "
          width " "
          layer)))
 
-(defrecord Polygon [start-x start-y
-                    end-x end-y
+(defrecord Polygon [start-xy
+                    end-xy
                     points
                     width layer]
   Library-Printer
@@ -114,15 +114,43 @@
       (fn [x y] (str "Dl " x " " y))
       points))))
 
+(defrecord Pad [shape size-x size-y delta-x delta-y
+                drill-shape drill-x drill-y offset-x offset-y
+                attribut layer-mask orientation net net-name
+                m-name xy]
+  Library-Printer
+  (output [this]
+    (list
+     (str "$PAD")
+     (str "Sh " m-name " "
+          shape " "
+          size-x " "
+          size-y " "
+          delta-x " "
+          delta-y " "
+          orientation)
+     (str "Dr "
+          drill-x " "
+          offset-x " "
+          offset-y
+          (if (= drill-shape 'O') (str " O " drill-x " " drill-y)))
+     (str "At " attribut " N " layer-mask)
+     (str "Ne " net " " (escaped-utf8 net-name))
+     (str "Po " (0 xy) " " (1 xy))
+     "$EndPAD")))
+
 
                                         ; MODULE::Write_3D_Descr
-(defrecord S3DMaster [file]
+(defrecord S3DMaster [file scale]
   Library-Printer
   (output [this]
     (list
      "$SHAPE3D"
      (str "Na " (escaped-utf8 file))
-     "Sc 1.000000 1.000000 1.000000"
+     (str "Sc "
+          (format "%.6f" scale) " "
+          (format "%.6f" scale) " "
+          (format "%.6f" scale))
      "Of 0.000000 0.000000 0.000000"
      "Ro 0.000000 0.000000 0.000000"
      "$EndSHAPE3D")))
@@ -154,6 +182,47 @@
                 (flatten
                  (output library)))))))
 
+;; ie.: 30 remains 30, but 31 goes to 35
+(defn round-to-grid-up [n]
+  (let [n (dec n)]
+  (+ n *grid-size-smallest* (- (mod n *grid-size-smallest*)))))
+
+;; ie.: 30 remains 30, but 29 does down to 25
+(defn round-to-grid-down [n]
+  (- n (mod n *grid-size-smallest*)))
+
+(defn round-inward [[x y]]
+  [(round-to-grid-down x)
+   (round-to-grid-down y)])
+
+(defn round-outward [[x y]]
+  [(round-to-grid-up x)
+   (round-to-grid-up y)])
+
+(defn footprint-sm [m-name length width gap ]
+  (let [pad-width (round-to-grid width)
+        pad-length (round-to-grid (/ (- length gap) 2))
+        pad-offset (round-to-grid (/ (+ pad-length gap) 2))]
+    (Module.
+     m-name
+     (make-text-reference [0 0] name)
+     (make-text-value [0 0] "VAL**")
+     (list
+      (Segment. 0 0 100 100 79 21)
+      (Segment. 100 100 200 100 59 21))
+     (list
+      (Pad. "R" pad-length pad-width 0 0
+            "C" 0 0 0 0
+            "SMD" "00888000"
+            0 0 ""
+            "1" (- pad-offset) 0)
+      (Pad. "R" pad-length pad-width 0 0
+            "C" 0 0 0 0
+            "SMD" "00888000"
+            0 0 ""
+            "2" (+ pad-offset) 0))
+     (S3DMaster. "smd/chip_cms.wrl" 0.05)))
+
 (defn -main [& args]
   (write-library "junk/my-lib.mod"
                  (Library.
@@ -165,5 +234,10 @@
                     (list
                      (Segment. 0 0 100 100 79 21)
                      (Segment. 100 100 200 100 59 21))
-                    nil
-                    (S3DMaster. "smd/qfn24.wrl"))))))
+                    (list
+                     (Pad. "O" 315 98 0 0
+                           "C" 0 0 0 0
+                           "SMD" "00888000"
+                           0 0 ""
+                           "1" -787 -492))
+                    (S3DMaster. "smd/qfn24.wrl" 1.0))))))
