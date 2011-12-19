@@ -3,7 +3,6 @@
 
 ;; date +"%a %d %b %Y %r %Z"
 (def ^:dynamic *footprint-library-header* "PCBNEW-LibModule-V1")
-(def ^:dynamic *lib-name* "my_lib")
 (def ^:dynamic *grid-size-smallest* 5) ;; units are decimils (5 = 1/2 mil)
 
 (defn escaped-utf8 [s]
@@ -47,16 +46,16 @@
          (if italic "I" "N") " "
          (escaped-utf8 text))))
 
-(defn make-text-reference [xy text]
-  (TexteModule. "0" xy 394 394 0 99 false false 21 false text))
-(defn make-text-value [xy text]
-  (TexteModule. "1" xy 394 394 0 99 false false 21 false text))
+(defn make-text-reference [pos-xy text]
+  (TexteModule. "0" pos-xy 394 394 0 99 false false 21 false text))
+(defn make-text-value [pos-xy text]
+  (TexteModule. "1" pos-xy 394 394 0 99 false false 21 false text))
 
 
                                         ; EDGE_MODULE::Save
-(defrecord Segment [start-xy
-                    end-xy
-                    width layer]
+(defrecord Segment [layer width
+                    start-xy
+                    end-xy]
   Library-Printer
   (output [this]
     (str "DS "
@@ -67,9 +66,9 @@
          width " "
          layer)))
 
-(defrecord Circle [start-xy
-                   end-xy
-                   width layer]
+(defrecord Circle [layer width
+                   start-xy
+                   end-xy]
   Library-Printer
   (output [this]
     (str "DC "
@@ -80,33 +79,33 @@
          width " "
          layer)))
 
-(defrecord Arc [start-xy
+(defrecord Arc [layer width
+                start-xy
                 end-xy
-                angle
-                width layer]
+                angle]
   Library-Printer
   (output [this]
     (str "DA "
-         (0 start-x) " "
-         (1 start-y) " "
-         (0 end-x) " "
-         (1 end-y) " "
+         (0 start-xy) " "
+         (1 start-xy) " "
+         (0 end-xy) " "
+         (1 end-xy) " "
          angle " "
          width " "
          layer)))
 
-(defrecord Polygon [start-xy
+(defrecord Polygon [layer width
+                    start-xy
                     end-xy
-                    points
-                    width layer]
+                    points]
   Library-Printer
   (output [this]
     (list
      (str "DP "
-          start-x " "
-          start-y " "
-          end-x " "
-          end-y " "
+          (0 start-xy) " "
+          (1 start-xy) " "
+          (0 end-xy) " "
+          (1 end-xy) " "
           (count points) " "
           width " "
           layer)
@@ -117,7 +116,7 @@
 (defrecord Pad [shape size-x size-y delta-x delta-y
                 drill-shape drill-x drill-y offset-x offset-y
                 attribut layer-mask orientation net net-name
-                m-name xy]
+                m-name pos-xy]
   Library-Printer
   (output [this]
     (list
@@ -136,7 +135,7 @@
           (if (= drill-shape 'O') (str " O " drill-x " " drill-y)))
      (str "At " attribut " N " layer-mask)
      (str "Ne " net " " (escaped-utf8 net-name))
-     (str "Po " (0 xy) " " (1 xy))
+     (str "Po " (0 pos-xy) " " (1 pos-xy))
      "$EndPAD")))
 
 
