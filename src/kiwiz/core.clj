@@ -1,4 +1,13 @@
 (ns kiwiz.core)
+
+;;SOLDER PAD RECOMMENDATIONS FOR SURFACE-MOUNT DEVICE
+;; http://www.ti.com/lit/an/sbfa015a/sbfa015a.pdf
+
+;; http://tinymicros.com/mediawiki/images/3/3c/IPC-SM-782A.pdf
+;; http://landpatterns.ipc.org/IPC-7351BNamingConvention.pdf
+
+
+
 ;; TODO: Revoir item_io.cpp L730 pour les autres attributs (soldermask etc.)
 
 ;; date +"%a %d %b %Y %r %Z"
@@ -277,7 +286,7 @@
                 [(+ half-width) (- half-height)]
                 [(+ half-line-width) (- half-line-width)]))))
 
-(defn footprint-sm [m-name length width gap]
+(defn footprint-sm [m-name length gap width]
   (let [pad-height (round-to-grid width)
         pad-width (round-to-grid (div-to-int (- length gap) 2))
         pad-offset (round-to-grid (div-to-int (+ pad-width gap) 2))]
@@ -326,8 +335,31 @@
                 (flatten
                  (output library)))))))
 
+;; converts mm to decimils
+(defn mm [n]
+  (Math/round ( * (/ n 25.4) 10000)))
+
+;; converts mils to decimils
+(defn mils [n]
+  (Math/round (* 10)))
+(
+;; converts inches to decimils
+(defn inches [n]
+  (Math/round (* 10000)))
+
+                                        ; IPC-SM-782
+
+                                        ; 8.1 Chip resistors
+(def IPC-resistors-chip
+  (Library.
+   (list
+    (footprint-sm "RESC-1005-[0402]-IPC" (mm 2.20) (mm 0.40) (mm 0.70))
+    (footprint-sm "RESC-1608-[0603]-IPC" (mm 2.80) (mm 0.60) (mm 1.00))
+    (footprint-sm "RESC-2012-[0805]-IPC" (mm 3.20) (mm 0.60) (mm 1.50))
+    (footprint-sm "RESC-3216-[1206]-IPC" (mm 4.40) (mm 1.20) (mm 1.80))
+    (footprint-sm "RESC-3225-[1210]-IPC" (mm 4.40) (mm 1.20) (mm 2.70))
+    (footprint-sm "RESC-5025-[2010]-IPC" (mm 6.20) (mm 2.60) (mm 2.70))
+    (footprint-sm "RESC-6332-[2512]-IPC" (mm 7.40) (mm 3.80) (mm 3.20)))))
+
 (defn -main [& args]
-  (write-library "junk/my-lib.mod"
-                 (Library.
-                  (list
-                   (footprint-sm "SM0805-GS" 1100 550 400)))))
+  (write-library "junk/resistors-chip.mod" IPC-resistors-chip))
