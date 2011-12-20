@@ -1,5 +1,6 @@
 (ns kiwiz.libs
-  (:use kiwiz.grid kiwiz.module kiwiz.draw))
+  (:use kiwiz.grid kiwiz.units kiwiz.module kiwiz.draw)
+  (:import [kiwiz.module Library Module Pad S3DMaster]))
 
 ;;SOLDER PAD RECOMMENDATIONS FOR SURFACE-MOUNT DEVICE
 ;; http://www.ti.com/lit/an/sbfa015a/sbfa015a.pdf
