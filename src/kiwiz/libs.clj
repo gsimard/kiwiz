@@ -1,4 +1,5 @@
 (ns kiwiz.libs
+  (:use incanter.core)
   (:use kiwiz.grid kiwiz.units kiwiz.module kiwiz.draw)
   (:import [kiwiz.module Library Module Pad S3DMaster]))
 
@@ -48,8 +49,27 @@
                   (take 3 (drop 2 points-around-pad-2))
                   (take 3 (drop 3 points-around-pad-2)))))))
        pads
-       (S3DMaster. "smd/chip_cms.wrl" 0.05))))) ;; FIXME
+       (S3DMaster. "smd/chip_cms.wrl" 0.05 0.0))))) ;; FIXME
 
+(defn footprint-sot-23 [m-name Z G X Y C E]
+  (let [Z (round-to-grid Z)
+        G (round-to-grid G)
+        X (round-to-grid X)
+        Y (round-to-grid Y)
+        C (round-to-grid C)
+        E (round-to-grid E)
+        X2 (round-to-grid ($= 2 * (E - X / 2)))]
+    (let [pads (list
+                (make-pad-smt X Y "1" [($= (X + X2) / -2.0) ($= C / 2.0)])
+                (make-pad-smt X Y "2" [($= (X + X2) / 2.0) ($= C / 2.0)])
+                (make-pad-smt X2 Y "3" [0.0 ($= C / -2.0)]))]
+      (Module.
+       m-name
+       (make-text-reference [0 0] m-name)
+       (make-text-value [0 0] "VAL**")
+       nil
+       pads
+       (S3DMaster. "smd/SOT23_6.wrl" 0.11 -180.0)))))
 
                                         ; IPC-SM-782
 
@@ -78,7 +98,17 @@
     (footprint-sm "CAPC-4532-[1812]-IPC-136A" (mm 5.80) (mm 2.00) (mm 3.40))
     (footprint-sm "CAPC-4564-[1825]-IPC-137A" (mm 5.80) (mm 2.00) (mm 6.80)))))
 
+                                        ; 8.6 SOT 23
+(def IPC-SOT-23
+  (Library.
+   (list
+    (footprint-sot-23 "RLP-210" (mm 3.60) (mm 0.80) (mm 1.00) (mm 1.40) (mm 2.20) (mm 0.95)))))
+
+
 (def IPC-libraries
   (list
    (list "resistors-chip.mod" IPC-resistors-chip)
-   (list "capacitors-chip.mod" IPC-capacitors-chip)))
+   (list "capacitors-chip.mod" IPC-capacitors-chip)
+   (list "sot-23.mod" IPC-SOT-23)))
+
+;; (kiwiz.core/-main "junk")

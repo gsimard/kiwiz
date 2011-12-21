@@ -62,11 +62,11 @@
   Library-Printer
   (output [this]
     (str "DS "
-         (first start-xy) " "
-         (second start-xy) " "
-         (first end-xy) " "
-         (second end-xy) " "
-         width " "
+         (int (first start-xy)) " "
+         (int (second start-xy)) " "
+         (int (first end-xy)) " "
+         (int (second end-xy)) " "
+         (int width) " "
          layer)))
 
 (defn make-segment [layer width start-xy end-xy]
@@ -78,11 +78,11 @@
   Library-Printer
   (output [this]
     (str "DC "
-         (first start-xy) " "
-         (second start-xy) " "
-         (first end-xy) " "
-         (second end-xy) " "
-         width " "
+         (int (first start-xy)) " "
+         (int (second start-xy)) " "
+         (int (first end-xy)) " "
+         (int (second end-xy)) " "
+         (int width) " "
          layer)))
 
 (defn make-circle [layer width start-xy end-xy]
@@ -95,12 +95,12 @@
   Library-Printer
   (output [this]
     (str "DA "
-         (first start-xy) " "
-         (second start-xy) " "
-         (first end-xy) " "
-         (second end-xy) " "
-         angle " "
-         width " "
+         (int (first start-xy)) " "
+         (int (second start-xy)) " "
+         (int (first end-xy)) " "
+         (int (second end-xy)) " "
+         (int angle) " "
+         (int width) " "
          layer)))
 
 (defn make-arc [layer width start-xy end-xy angle]
@@ -114,15 +114,15 @@
   (output [this]
     (list
      (str "DP "
-          (first start-xy) " "
-          (second start-xy) " "
-          (first end-xy) " "
-          (second end-xy) " "
-          (count points) " "
-          width " "
+          (int (first start-xy)) " "
+          (int (second start-xy)) " "
+          (int (first end-xy)) " "
+          (int (second end-xy)) " "
+          (int (count points)) " "
+          (int width) " "
           layer)
      (map
-      (fn [x y] (str "Dl " x " " y))
+      (fn [x y] (str "Dl " (int x) " " (int y)))
       points))))
 
 (defn make-polygon [layer width start-xy end-xy points]
@@ -138,19 +138,19 @@
      (str "$PAD")
      (str "Sh " (escaped-utf8 m-name) " "
           shape " "
-          size-x " "
-          size-y " "
-          delta-x " "
-          delta-y " "
-          orientation)
+          (int size-x) " "
+          (int size-y) " "
+          (int delta-x) " "
+          (int delta-y) " "
+          (int orientation))
      (str "Dr "
-          drill-x " "
-          offset-x " "
-          offset-y
-          (if (= drill-shape 'O') (str " O " drill-x " " drill-y)))
+          (int drill-x) " "
+          (int offset-x) " "
+          (int offset-y)
+          (if (= drill-shape 'O') (str " O " (int drill-x) " " (int drill-y))))
      (str "At " attribut " N " layer-mask)
      (str "Ne " net " " (escaped-utf8 net-name))
-     (str "Po " (first pos-xy) " " (second pos-xy))
+     (str "Po " (int (first pos-xy)) " " (int (second pos-xy)))
      "$EndPAD")))
 
 (defn make-pad [shape size-x size-y delta-x delta-y
@@ -162,12 +162,19 @@
         attribut layer-mask orientation net net-name
         m-name pos-xy))
 
+(defn make-pad-smt [width height pad-name pos-xy]
+  (Pad. "R" width height 0 0
+        "C" 0 0 0 0
+        "SMD" "00888000"
+        0 0 ""
+        pad-name pos-xy))
+
 (defn get-pad-by-name [pads p-name]
   (first (filter #(= (:m-name %) p-name) pads)))
 
 
                                         ; MODULE::Write_3D_Descr
-(defrecord S3DMaster [file scale]
+(defrecord S3DMaster [file scale orient]
   Library-Printer
   (output [this]
     (list
@@ -178,7 +185,7 @@
           (format "%.6f" scale) " "
           (format "%.6f" scale))
      "Of 0.000000 0.000000 0.000000"
-     "Ro 0.000000 0.000000 0.000000"
+     (str "Ro 0.000000 0.000000 " (format "%.6f" orient))
      "$EndSHAPE3D")))
 
 

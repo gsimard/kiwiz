@@ -21,3 +21,5 @@
         (dorun (map (partial write-library dest) IPC-libraries))
         (println (str "Libraries written to: " dest "/")))
       (show-usage))))
+
+;; (-main "junk")
