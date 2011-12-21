@@ -1,7 +1,7 @@
 (ns kiwiz.core
   (:use kiwiz.module kiwiz.libs))
 
-(defn write-library [file library]
+(defn write-library [[file library]]
   (spit file
         (with-out-str
           (doall
@@ -10,4 +10,4 @@
                  (output library)))))))
 
 (defn -main [& args]
-  (write-library "junk/resistors-chip.mod" IPC-resistors-chip))
+  (map write-library IPC-libraries))

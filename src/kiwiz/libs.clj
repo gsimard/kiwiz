@@ -69,11 +69,16 @@
 (def IPC-capacitors-chip
   (Library.
    (list
-    (footprint-sm "RESC-1005-[0402]-IPC-130A" (mm 2.20) (mm 0.40) (mm 0.70))
-    (footprint-sm "RESC-1310-[0504]-IPC-131A" (mm 2.40) (mm 0.40) (mm 1.30))
-    (footprint-sm "RESC-1608-[0603]-IPC-132A" (mm 2.80) (mm 0.60) (mm 1.00))
-    (footprint-sm "RESC-2012-[0805]-IPC-133A" (mm 3.20) (mm 0.60) (mm 1.50))
-    (footprint-sm "RESC-3216-[1206]-IPC-134A" (mm 4.40) (mm 1.20) (mm 1.80))
-    (footprint-sm "RESC-3225-[1210]-IPC-135A" (mm 4.40) (mm 1.20) (mm 2.70))
-    (footprint-sm "RESC-4532-[1812]-IPC-136A" (mm 5.80) (mm 2.00) (mm 3.40))
-    (footprint-sm "RESC-4564-[1825]-IPC-137A" (mm 5.80) (mm 2.00) (mm 6.80)))))
+    (footprint-sm "CAPC-1005-[0402]-IPC-130A" (mm 2.20) (mm 0.40) (mm 0.70))
+    (footprint-sm "CAPC-1310-[0504]-IPC-131A" (mm 2.40) (mm 0.40) (mm 1.30))
+    (footprint-sm "CAPC-1608-[0603]-IPC-132A" (mm 2.80) (mm 0.60) (mm 1.00))
+    (footprint-sm "CAPC-2012-[0805]-IPC-133A" (mm 3.20) (mm 0.60) (mm 1.50))
+    (footprint-sm "CAPC-3216-[1206]-IPC-134A" (mm 4.40) (mm 1.20) (mm 1.80))
+    (footprint-sm "CAPC-3225-[1210]-IPC-135A" (mm 4.40) (mm 1.20) (mm 2.70))
+    (footprint-sm "CAPC-4532-[1812]-IPC-136A" (mm 5.80) (mm 2.00) (mm 3.40))
+    (footprint-sm "CAPC-4564-[1825]-IPC-137A" (mm 5.80) (mm 2.00) (mm 6.80)))))
+
+(def IPC-libraries
+  (list
+   (list "junk/resistors-chip.mod" IPC-resistors-chip)
+   (list "junk/capacitors-chip.mod" IPC-capacitors-chip)))
