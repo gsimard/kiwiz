@@ -4,7 +4,10 @@ Footprint wizard for the KiCad project.
 
 ## Usage
 
-Does nothing right now.
+To generate libraries in subfolder dest:
+
+mkdir dest
+lein run dest
 
 ## License
 

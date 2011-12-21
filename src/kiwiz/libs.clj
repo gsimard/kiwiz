@@ -80,5 +80,5 @@
 
 (def IPC-libraries
   (list
-   (list "junk/resistors-chip.mod" IPC-resistors-chip)
-   (list "junk/capacitors-chip.mod" IPC-capacitors-chip)))
+   (list "resistors-chip.mod" IPC-resistors-chip)
+   (list "capacitors-chip.mod" IPC-capacitors-chip)))
