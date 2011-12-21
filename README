@@ -2,12 +2,14 @@
 
 Footprint wizard for the KiCad project.
 
+Pull only from branch master.
+
 ## Usage
 
 To generate libraries in subfolder dest:
 
 mkdir dest
-lein run dest
+java -jar kiwiz-0.1.0-SNAPSHOT-standalone.jar dest
 
 ## License
 
