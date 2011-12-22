@@ -51,25 +51,33 @@
        pads
        (S3DMaster. "smd/chip_cms.wrl" 0.05 0.0))))) ;; FIXME
 
+(defmacro grid-syms [syms & body]
+  `(let [~@(reduce concat
+                   (map #(list % `(round-to-grid ~%)) syms))]
+     ~@body))
+
+(binding [*grid-size* grid-size-smallest]
+  (let [X 4.2
+        Y 10.2]
+    (grid-syms [X Y]
+               (+ X Y)
+               (list X Y))))
+
 (defn footprint-sot-23 [m-name Z G X Y C E]
-  (let [Z (round-to-grid Z)
-        G (round-to-grid G)
-        X (round-to-grid X)
-        Y (round-to-grid Y)
-        C (round-to-grid C)
-        E (round-to-grid E)
-        X2 (round-to-grid ($= 2 * (E - X / 2)))]
-    (let [pads (list
-                (make-pad-smt X Y "1" [($= (X + X2) / -2.0) ($= C / 2.0)])
-                (make-pad-smt X Y "2" [($= (X + X2) / 2.0) ($= C / 2.0)])
-                (make-pad-smt X2 Y "3" [0.0 ($= C / -2.0)]))]
-      (Module.
-       m-name
-       (make-text-reference [0 0] m-name)
-       (make-text-value [0 0] "VAL**")
-       nil
-       pads
-       (S3DMaster. "smd/SOT23_6.wrl" 0.11 -180.0)))))
+  (grid-syms
+   [Z G X Y C E]
+   (let [X2 (round-to-grid ($= 2 * (E - X / 2)))]
+     (let [pads (list
+                 (make-pad-smt X Y "1" [($= (X + X2) / -2.0) ($= C / 2.0)])
+                 (make-pad-smt X Y "2" [($= (X + X2) / 2.0) ($= C / 2.0)])
+                 (make-pad-smt X2 Y "3" [0.0 ($= C / -2.0)]))]
+       (Module.
+        m-name
+        (make-text-reference [0 0] m-name)
+        (make-text-value [0 0] "VAL**")
+        nil
+        pads
+        (S3DMaster. "smd/SOT23_6.wrl" 0.11 -180.0))))))
 
                                         ; IPC-SM-782
 
