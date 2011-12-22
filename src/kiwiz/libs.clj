@@ -51,10 +51,6 @@
        pads
        (S3DMaster. "smd/chip_cms.wrl" 0.05 0.0))))) ;; FIXME
 
-(defmacro grid-syms [syms & body]
-  `(let [~@(reduce concat
-                   (map #(list % `(round-to-grid ~%)) syms))]
-     ~@body))
 
 (binding [*grid-size* grid-size-smallest]
   (let [X 4.2
