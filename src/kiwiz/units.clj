@@ -6,27 +6,41 @@
    (map? u)
    (every? u [:type :kind :val])))
 
-;; units in .mod files are decimils
-(defn decimils [u]
+(defn unit-cast [u kind factor]
   {:pre [(or (number? u) (unit? u))]}
   (let [v (if (unit? u)
-            (:val (nm u))
+            (/ (:val (nm u)) factor)
             u)]
-    {:type :unit :kind :decimils :val v}))
+    {:type :unit :kind kind :val v}))
 
-(defn decimils? [u])
+(defn unit-test [u kind]
+  (and
+   (unit? u)
+   (= :decimils (:kind u))))
+
+;; units in .mod files are decimils
+(defn decimils [u]
+  (unit-cast u :decimils 2540))
+(defn decimils? [u]
+  (unit-test u :decimils))
 
 ;; converts mils to decimils
-(defn mils [n]
-  {:type :unit :kind :mils :val n})
+(defn mils [u]
+  (unit-cast u :mils 25400))
+(defn mils? [u]
+  (unit-test u :mils))
 
 ;; converts inches to decimils
-(defn inches [n]
-  {:type :unit :kind :inches :val n})
+(defn inches [u]
+  (unit-cast u :inches 25400000))
+(defn mils? [u]
+  (unit-test u :inches))
 
 ;; converts mm to decimils
-(defn mm [n]
-  {:type :unit :kind :mm :val n})
+(defn mm [u]
+  (unit-cast u :mm 1000000))
+(defn mm? [u]
+  (unit-test u :mm))
 
 ;; the nm is the smallest unit to which all
 ;; other are brought back to for a conversion
@@ -41,10 +55,20 @@
              true 0)
             u)]
     {:type :unit :kind :nm :val (int n)}))
-
-(nm (mm 34))
+(defn nm? [u]
+  (unit-test u :nm))
 
 ;; 1 dmil / 10000 dmils/inch * 0.0254 m/inch * 1e9 nm/m = 2540 nm/dmil
 ;; 1 mil / 1000 mils/inch * 0.0254 m/inch * 1e9 nm/m = 25400 nm/mil
 ;; 1 inch * 0.0254 m/inch * 1e9 nm/m = 25400000 nm/inch
 ;; 1 mm / 1000 mm/m * 1e9 nm/m = 1e6 nm/mm
+
+(decimils? (decimils (mm 34)))
+
+(nm (mm 34))
+
+(nm (mils 1))
+
+(mils (mm 1))
+
+(nm 121.9)
