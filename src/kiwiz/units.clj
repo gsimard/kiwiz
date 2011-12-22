@@ -4,19 +4,36 @@
 (defn unit? [u]
   (and
    (map? u)
-   (every? u [:type :kind :val])))
+   (every? u [:unit :val])))
 
-(defn unit-cast [u kind factor]
+(defn unit-cast [u unit factor]
   {:pre [(or (number? u) (unit? u))]}
   (let [v (if (unit? u)
             (/ (:val (nm u)) factor)
             u)]
-    {:type :unit :kind kind :val v}))
+    {:unit unit :val v}))
 
-(defn unit-test [u kind]
+(defn unit-test [u unit]
   (and
    (unit? u)
-   (= :decimils (:kind u))))
+   (= unit (:unit u))))
+
+;; the nm is the smallest unit to which all
+;; other are brought back to for a conversion
+(defn nm [u]
+  {:pre [(or (number? u) (unit? u))]}
+  (let [n (if (unit? u)
+            (cond
+             (= :decimils (:unit u)) (* (:val u) 2540)
+             (= :mils (:unit u)) (* (:val u) 25400)
+             (= :inches (:unit u)) (* (:val u) 25400000)
+             (= :mm (:unit u)) (* (:val u) 1000000)
+             (= :nm (:unit u)) (:val u)
+             true 0)
+            u)]
+    {:unit :nm :val (int n)}))
+(defn nm? [u]
+  (unit-test u :nm))
 
 ;; units in .mod files are decimils
 (defn decimils [u]
@@ -42,33 +59,28 @@
 (defn mm? [u]
   (unit-test u :mm))
 
-;; the nm is the smallest unit to which all
-;; other are brought back to for a conversion
-(defn nm [u]
-  {:pre [(or (number? u) (unit? u))]}
-  (let [n (if (unit? u)
-            (cond
-             (= :decimils (:kind u)) (* (:val u) 2540)
-             (= :mils (:kind u)) (* (:val u) 25400)
-             (= :inches (:kind u)) (* (:val u) 25400000)
-             (= :mm (:kind u)) (* (:val u) 1000000)
-             true 0)
-            u)]
-    {:type :unit :kind :nm :val (int n)}))
-(defn nm? [u]
-  (unit-test u :nm))
-
 ;; 1 dmil / 10000 dmils/inch * 0.0254 m/inch * 1e9 nm/m = 2540 nm/dmil
 ;; 1 mil / 1000 mils/inch * 0.0254 m/inch * 1e9 nm/m = 25400 nm/mil
 ;; 1 inch * 0.0254 m/inch * 1e9 nm/m = 25400000 nm/inch
 ;; 1 mm / 1000 mm/m * 1e9 nm/m = 1e6 nm/mm
 
-(decimils? (decimils (mm 34)))
+(defmulti add (fn [x y] ))
+(defmethod add :
 
-(nm (mm 34))
+;; (decimils? (decimils (mm 34)))
 
-(nm (mils 1))
+;; (nm (mm 34))
 
-(mils (mm 1))
+;; (nm (mils 1))
 
-(nm 121.9)
+;; (mils? (mils (mm 1)))
+
+;; (nm? (nm (nm 2)))
+
+;; (inches (mils 1))
+
+;; (nm 121.9)
+
+;; (mm? (nm (mm 1.2)))
+
+;; (inches (mm 1))
