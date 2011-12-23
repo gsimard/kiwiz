@@ -29,6 +29,9 @@
 (defn to-decimils [n]
   {:pre [(number? n)]}
   (/ n 2540))
+(defn to-decimils-int [n]
+  {:pre [(number? n)]}
+  (int (/ n 2540)))
 
 (defn mils [n]
   {:pre [(number? n)]}

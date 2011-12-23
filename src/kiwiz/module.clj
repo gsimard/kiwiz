@@ -1,5 +1,5 @@
 (ns kiwiz.module
-  (:use kiwiz.grid))
+  (:use kiwiz.grid kiwiz.units))
 
 
 ;; TODO: Revoir item_io.cpp L730 pour les autres attributs (soldermask etc.)
@@ -62,11 +62,11 @@
   Library-Printer
   (output [this]
     (str "DS "
-         (int (first start-xy)) " "
-         (int (second start-xy)) " "
-         (int (first end-xy)) " "
-         (int (second end-xy)) " "
-         (int width) " "
+         (to-decimils-int (first start-xy)) " "
+         (to-decimils-int (second start-xy)) " "
+         (to-decimils-int (first end-xy)) " "
+         (to-decimils-int (second end-xy)) " "
+         (to-decimils-int width) " "
          layer)))
 
 (defn make-segment [layer width start-xy end-xy]
@@ -78,11 +78,11 @@
   Library-Printer
   (output [this]
     (str "DC "
-         (int (first start-xy)) " "
-         (int (second start-xy)) " "
-         (int (first end-xy)) " "
-         (int (second end-xy)) " "
-         (int width) " "
+         (to-decimils-int (first start-xy)) " "
+         (to-decimils-int (second start-xy)) " "
+         (to-decimils-int (first end-xy)) " "
+         (to-decimils-int (second end-xy)) " "
+         (to-decimils-int width) " "
          layer)))
 
 (defn make-circle [layer width start-xy end-xy]
@@ -95,12 +95,12 @@
   Library-Printer
   (output [this]
     (str "DA "
-         (int (first start-xy)) " "
-         (int (second start-xy)) " "
-         (int (first end-xy)) " "
-         (int (second end-xy)) " "
+         (to-decimils-int (first start-xy)) " "
+         (to-decimils-int (second start-xy)) " "
+         (to-decimils-int (first end-xy)) " "
+         (to-decimils-int (second end-xy)) " "
          (int angle) " "
-         (int width) " "
+         (to-decimils-int width) " "
          layer)))
 
 (defn make-arc [layer width start-xy end-xy angle]
@@ -114,15 +114,15 @@
   (output [this]
     (list
      (str "DP "
-          (int (first start-xy)) " "
-          (int (second start-xy)) " "
-          (int (first end-xy)) " "
-          (int (second end-xy)) " "
+          (to-decimils-int (first start-xy)) " "
+          (to-decimils-int (second start-xy)) " "
+          (to-decimils-int (first end-xy)) " "
+          (to-decimils-int (second end-xy)) " "
           (int (count points)) " "
-          (int width) " "
+          (to-decimils-int width) " "
           layer)
      (map
-      (fn [x y] (str "Dl " (int x) " " (int y)))
+      (fn [x y] (str "Dl " (to-decimils-int x) " " (to-decimils-int y)))
       points))))
 
 (defn make-polygon [layer width start-xy end-xy points]
@@ -138,19 +138,19 @@
      (str "$PAD")
      (str "Sh " (escaped-utf8 m-name) " "
           shape " "
-          (int size-x) " "
-          (int size-y) " "
-          (int delta-x) " "
-          (int delta-y) " "
+          (to-decimils-int size-x) " "
+          (to-decimils-int size-y) " "
+          (to-decimils-int delta-x) " "
+          (to-decimils-int delta-y) " "
           (int orientation))
      (str "Dr "
-          (int drill-x) " "
-          (int offset-x) " "
-          (int offset-y)
-          (if (= drill-shape 'O') (str " O " (int drill-x) " " (int drill-y))))
+          (to-decimils-int drill-x) " "
+          (to-decimils-int offset-x) " "
+          (to-decimils-int offset-y)
+          (if (= drill-shape 'O') (str " O " (to-decimils-int drill-x) " " (to-decimils-int drill-y))))
      (str "At " attribut " N " layer-mask)
      (str "Ne " net " " (escaped-utf8 net-name))
-     (str "Po " (int (first pos-xy)) " " (int (second pos-xy)))
+     (str "Po " (to-decimils-int (first pos-xy)) " " (to-decimils-int (second pos-xy)))
      "$EndPAD")))
 
 (defn make-pad [shape size-x size-y delta-x delta-y
