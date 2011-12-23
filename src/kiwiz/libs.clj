@@ -51,14 +51,6 @@
        pads
        (S3DMaster. "smd/chip_cms.wrl" 0.05 0.0))))) ;; FIXME
 
-
-(binding [*grid-size* grid-size-smallest]
-  (let [X 4.2
-        Y 10.2]
-    (grid-syms [X Y]
-               (+ X Y)
-               (list X Y))))
-
 (defn footprint-sot-23 [m-name Z G X Y C E]
   (grid-syms
    [Z G X Y C E]
