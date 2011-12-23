@@ -71,7 +71,9 @@
         m-name
         (make-text-reference [0 0] m-name)
         (make-text-value [0 0] "VAL**")
-        nil
+        (draw-box 21 *silkscreen-width*
+                  (stretch-box (div-to-int *silkscreen-width* 2)
+                               (bounding-box (map corners-outside-pad pads))))
         pads
         (S3DMaster. "smd/SOT23_6.wrl" 0.11 -180.0))))))
 
