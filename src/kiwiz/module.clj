@@ -37,12 +37,12 @@
   Library-Printer
   (output [this]
     (str "T" typ " "
-         (first pos-xy) " "
-         (second pos-xy) " "
-         size-y " "
-         size-x " "
+         (to-decimils-int (first pos-xy)) " "
+         (to-decimils-int (second pos-xy)) " "
+         (to-decimils-int size-y) " "
+         (to-decimils-int size-x) " "
          orient " "
-         thickness " "
+         (to-decimils-int thickness) " "
          (if mirror "M" "N") " "
          (if noshow "I" "V") " "
          layer " "
