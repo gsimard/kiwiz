@@ -1,22 +1,10 @@
 (ns kiwiz.units
   (import java.lang.Math))
 
-(defn unit? [u]
+(defn- unit? [u]
   (and
    (map? u)
    (every? u [:unit :val])))
-
-(defn unit-cast [u unit factor]
-  {:pre [(or (number? u) (unit? u))]}
-  (let [v (if (unit? u)
-            (/ (:val (nm u)) factor)
-            u)]
-    {:unit unit :val v}))
-
-(defn unit-test [u unit]
-  (and
-   (unit? u)
-   (= unit (:unit u))))
 
 ;; the nm is the smallest unit to which all
 ;; other are brought back to for a conversion
@@ -32,6 +20,19 @@
              true 0)
             u)]
     {:unit :nm :val (int n)}))
+
+(defn- unit-cast [u unit factor]
+  {:pre [(or (number? u) (unit? u))]}
+  (let [v (if (unit? u)
+            (/ (:val (nm u)) factor)
+            u)]
+    {:unit unit :val v}))
+
+(defn- unit-test [u unit]
+  (and
+   (unit? u)
+   (= unit (:unit u))))
+
 (defn nm? [u]
   (unit-test u :nm))
 
@@ -64,8 +65,15 @@
 ;; 1 inch * 0.0254 m/inch * 1e9 nm/m = 25400000 nm/inch
 ;; 1 mm / 1000 mm/m * 1e9 nm/m = 1e6 nm/mm
 
-(defmulti add (fn [x y] ))
-(defmethod add :
+(defn add [x y]
+  {:pre [(and
+          (or (number? x) (unit? x))
+          (or (number? y) (unit? y)))]}
+  (nm (+ (:val (nm x)) (:val (nm y)))))
+
+(= [3 2 1] (reverse [1 2 3]))
+
+(sequential? {:a 1 :b 2})
 
 ;; (decimils? (decimils (mm 34)))
 
