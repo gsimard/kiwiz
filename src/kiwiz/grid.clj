@@ -20,13 +20,6 @@
   [(apply + (map first args))
    (apply + (map second args))])
 
-(defn point [x y]
-  {:pre [(= :unit (:type x))
-         (= :unit (:type y))]}
-  {:type :point :x x :y y})
-
-(point (decimils 1) (decimils 2))
-
 ;; ie.: 30 remains 30, but 29 does down to 25
 (defn round-to-grid-down [n]
   (- n (mod n *grid-size*)))
