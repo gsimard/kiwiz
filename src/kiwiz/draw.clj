@@ -1,10 +1,10 @@
 (ns kiwiz.draw
-  (:use kiwiz.grid))
+  (:use kiwiz.grid kiwiz.module))
 
 
 ;; returns the four points outside a given pad taking line width into account
 ;; goes from quadrant 1 (+,+) to quadrant 4 (+,-) ccw (increasing math angle)
-(defn corners-outside-pad [pad]
+(defn pad-corners [pad]
   (let [pos-xy (:pos-xy pad)
         width (:size-x pad)
         half-width (div-to-int width 2)
@@ -34,9 +34,8 @@
    (point-add p3 [(- delta) (- delta)])
    (point-add p4 [(+ delta) (- delta)])))
 
+(defn draw-segments [layer width points]
+  (map (partial make-segment layer width) (butlast points) (rest points)))
+
 (defn draw-box [layer width [p1 p2 p3 p4]]
-  (list
-   (make-segment layer width p1 p2)
-   (make-segment layer width p2 p3)
-   (make-segment layer width p3 p4)
-   (make-segment layer width p4 p1)))
+  (draw-segments layer width [p1 p2 p3 p4 p1]))

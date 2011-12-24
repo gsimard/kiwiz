@@ -33,12 +33,12 @@
          (doall
           (let [points-around-pad-1 (cycle
                                      (map round-point-to-grid-outwards
-                                          (corners-outside-pad
+                                          (pad-corners
                                            (get-pad-by-name pads "1")
                                            *silkscreen-width*)))
                 points-around-pad-2 (cycle
                                      (map round-point-to-grid-outwards
-                                          (corners-outside-pad
+                                          (pad-corners
                                            (get-pad-by-name pads "2")
                                            *silkscreen-width*)))]
             (concat
@@ -48,6 +48,43 @@
              (map (partial make-segment 21 *silkscreen-width*)
                   (take 3 (drop 2 points-around-pad-2))
                   (take 3 (drop 3 points-around-pad-2)))))))
+       pads
+       (S3DMaster. "smd/chip_cms.wrl" 0.05 0.0))))) ;; FIXME
+
+(defn footprint-sm [m-name Z G X Y C]
+  (grid-syms
+   [Z G X Y C]
+   (let [pads (list
+               (make-pad-smt Y X "1" [($= C / -2.0) 0])
+               (make-pad-smt X Y "2" [($= C / 2.0) 0]))]
+      (Module.
+       m-name
+       (make-text-reference [0 0] m-name)
+       (make-text-value [0 0] "VAL**")
+       (binding [*grid-size* grid-size-small]
+         (doall
+          (let [points-around-pad-1 (cycle
+                                     (map round-point-to-grid-outwards
+                                          (pad-corners
+                                           (get-pad-by-name pads "1")
+                                           *silkscreen-width*)))
+                points-around-pad-2 (cycle
+                                     (map round-point-to-grid-outwards
+                                          (pad-corners
+                                           (get-pad-by-name pads "2")
+                                           *silkscreen-width*)))]
+            (concat
+             (map (partial make-segment 21 *silkscreen-width*)
+                  (take 3 points-around-pad-1)
+                  (take 3 (drop 1 points-around-pad-1)))
+             (map (partial make-segment 21 *silkscreen-width*)
+                  (take 3 (drop 2 points-around-pad-2))
+                  (take 3 (drop 3 points-around-pad-2)))))))
+       (draw-segments
+        21 *silkscreen-width*
+        (map round-point-to-grid-outwards
+             (stretch-box (div-to-int *silkscreen-width* 2)
+                          (pad-corners (get-pad-by-name pads "1")))))
        pads
        (S3DMaster. "smd/chip_cms.wrl" 0.05 0.0))))) ;; FIXME
 
@@ -65,7 +102,7 @@
         (make-text-value [0 0] "VAL**")
         (draw-box 21 *silkscreen-width*
                   (stretch-box (div-to-int *silkscreen-width* 2)
-                               (bounding-box (map corners-outside-pad pads))))
+                               (bounding-box (map pad-corners pads))))
         pads
         (S3DMaster. "smd/SOT23_6.wrl" 0.11 -180.0))))))
 

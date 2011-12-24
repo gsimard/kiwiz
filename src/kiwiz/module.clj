@@ -32,7 +32,7 @@
 
                                         ; TEXTE_MODULE::Save
 ;; size y and x really are in this order.
-(defrecord TexteModule [typ pos-xy size-y size-x orient
+(defrecord TexteModule [typ pos-xy size-y size-x orientation
                         thickness mirror noshow layer italic text]
   Library-Printer
   (output [this]
@@ -41,7 +41,7 @@
          (to-decimils-int (second pos-xy)) " "
          (to-decimils-int size-y) " "
          (to-decimils-int size-x) " "
-         orient " "
+         (int orientation) " "
          (to-decimils-int thickness) " "
          (if mirror "M" "N") " "
          (if noshow "I" "V") " "
@@ -174,7 +174,7 @@
 
 
                                         ; MODULE::Write_3D_Descr
-(defrecord S3DMaster [file scale orient]
+(defrecord S3DMaster [file scale orientation]
   Library-Printer
   (output [this]
     (list
@@ -185,7 +185,7 @@
           (format "%.6f" scale) " "
           (format "%.6f" scale))
      "Of 0.000000 0.000000 0.000000"
-     (str "Ro 0.000000 0.000000 " (format "%.6f" orient))
+     (str "Ro 0.000000 0.000000 " (format "%.6f" orientation))
      "$EndSHAPE3D")))
 
 
