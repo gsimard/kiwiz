@@ -87,6 +87,24 @@
     (footprint-sm "CAPC-4532-[1812]-IPC-136A" (mm 5.80) (mm 2.00) (mm 3.40) (mm 1.90) (mm 3.90))
     (footprint-sm "CAPC-4564-[1825]-IPC-137A" (mm 5.80) (mm 2.00) (mm 6.80) (mm 1.90) (mm 3.90)))))
 
+                                        ; 8.3 Inductors
+(def IPC-inductors
+  (Library.
+   (list
+    (footprint-sm "160-2012-Chip" (mm 3.00) (mm 1.00) (mm 1.00) (mm 1.00) (mm 2.00))
+    (footprint-sm "161-3216-Chip" (mm 4.20) (mm 1.80) (mm 1.60) (mm 1.20) (mm 3.00))
+    (footprint-sm "162-4516-Chip" (mm 5.80) (mm 2.60) (mm 1.00) (mm 1.60) (mm 4.20))
+    (footprint-sm "163-2825-Prec" (mm 3.80) (mm 1.00) (mm 2.40) (mm 1.40) (mm 2.40))
+    (footprint-sm "164-3225-Prec" (mm 4.60) (mm 1.00) (mm 2.00) (mm 1.80) (mm 2.80))
+    (footprint-sm "165-4532-Prec" (mm 5.80) (mm 2.20) (mm 3.60) (mm 1.80) (mm 4.00))
+    (footprint-sm "166-5038-Prec" (mm 5.80) (mm 3.00) (mm 2.80) (mm 1.40) (mm 4.40))
+    (footprint-sm "167-3225/3230-Molded" (mm 4.40) (mm 1.20) (mm 2.20) (mm 1.60) (mm 2.80))
+    (footprint-sm "168-4035-Molded" (mm 5.40) (mm 1.00) (mm 1.40) (mm 2.20) (mm 3.20))
+    (footprint-sm "169-4532-Molded" (mm 5.80) (mm 1.80) (mm 2.40) (mm 2.00) (mm 3.80))
+    (footprint-sm "170-5650-Molded" (mm 6.80) (mm 3.20) (mm 4.00) (mm 1.80) (mm 5.00))
+    (footprint-sm "171-8530-Molded" (mm 9.80) (mm 5.00) (mm 1.40) (mm 2.40) (mm 7.40)))))
+
+
                                         ; 8.6 SOT 23
 (def IPC-SOT-23
   (Library.
@@ -98,6 +116,7 @@
   (list
    (list "resistors-chip.mod" IPC-resistors-chip)
    (list "capacitors-chip.mod" IPC-capacitors-chip)
+   (list "inductors.mod" IPC-inductors)
    (list "sot-23.mod" IPC-SOT-23)))
 
 ;; (kiwiz.core/-main "junk")
