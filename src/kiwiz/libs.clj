@@ -10,83 +10,34 @@
 ;; http://landpatterns.ipc.org/IPC-7351BNamingConvention.pdf
 
 
-(defn footprint-sm [m-name length gap width]
-  (let [pad-height (round-to-grid width)
-        pad-width (round-to-grid (div-to-int (- length gap) 2))
-        pad-offset (round-to-grid (div-to-int (+ pad-width gap) 2))]
-    (let [pads (list
-                (Pad. "R" pad-width pad-height 0 0
-                      "C" 0 0 0 0
-                      "SMD" "00888000"
-                      0 0 ""
-                      "1" [(- pad-offset) 0])
-                (Pad. "R" pad-width pad-height 0 0
-                      "C" 0 0 0 0
-                      "SMD" "00888000"
-                      0 0 ""
-                      "2" [(+ pad-offset) 0]))]
-      (Module.
-       m-name
-       (make-text-reference [0 0] m-name)
-       (make-text-value [0 0] "VAL**")
-       (binding [*grid-size* grid-size-small]
-         (doall
-          (let [points-around-pad-1 (cycle
-                                     (map round-point-to-grid-outwards
-                                          (pad-corners
-                                           (get-pad-by-name pads "1")
-                                           *silkscreen-width*)))
-                points-around-pad-2 (cycle
-                                     (map round-point-to-grid-outwards
-                                          (pad-corners
-                                           (get-pad-by-name pads "2")
-                                           *silkscreen-width*)))]
-            (concat
-             (map (partial make-segment 21 *silkscreen-width*)
-                  (take 3 points-around-pad-1)
-                  (take 3 (drop 1 points-around-pad-1)))
-             (map (partial make-segment 21 *silkscreen-width*)
-                  (take 3 (drop 2 points-around-pad-2))
-                  (take 3 (drop 3 points-around-pad-2)))))))
-       pads
-       (S3DMaster. "smd/chip_cms.wrl" 0.05 0.0))))) ;; FIXME
-
 (defn footprint-sm [m-name Z G X Y C]
   (grid-syms
-   [Z G X Y C]
+   [Z G X Y]
    (let [pads (list
-               (make-pad-smt Y X "1" [($= C / -2.0) 0])
-               (make-pad-smt X Y "2" [($= C / 2.0) 0]))]
+               (make-pad-smt Y X "1" [(round-to-grid-down ($= C / -2.0)) 0])
+               (make-pad-smt Y X "2" [(round-to-grid-up ($= C / 2.0)) 0]))]
       (Module.
        m-name
        (make-text-reference [0 0] m-name)
        (make-text-value [0 0] "VAL**")
        (binding [*grid-size* grid-size-small]
          (doall
-          (let [points-around-pad-1 (cycle
-                                     (map round-point-to-grid-outwards
-                                          (pad-corners
-                                           (get-pad-by-name pads "1")
-                                           *silkscreen-width*)))
-                points-around-pad-2 (cycle
-                                     (map round-point-to-grid-outwards
-                                          (pad-corners
-                                           (get-pad-by-name pads "2")
-                                           *silkscreen-width*)))]
-            (concat
-             (map (partial make-segment 21 *silkscreen-width*)
-                  (take 3 points-around-pad-1)
-                  (take 3 (drop 1 points-around-pad-1)))
-             (map (partial make-segment 21 *silkscreen-width*)
-                  (take 3 (drop 2 points-around-pad-2))
-                  (take 3 (drop 3 points-around-pad-2)))))))
-       (draw-segments
-        21 *silkscreen-width*
-        (map round-point-to-grid-outwards
-             (stretch-box (div-to-int *silkscreen-width* 2)
-                          (pad-corners (get-pad-by-name pads "1")))))
+          (concat
+           (draw-segments
+            21 *silkscreen-width*
+            (map round-point-to-grid-outwards
+                 (stretch-box (div-to-int *silkscreen-width* 2)
+                              (pad-corners (get-pad-by-name pads "1")))))
+           (draw-segments
+            21 *silkscreen-width*
+            (map round-point-to-grid-outwards
+                 (rotate
+                  2
+                  (stretch-box (div-to-int *silkscreen-width* 2)
+                               (pad-corners (get-pad-by-name pads "2")))))))))
        pads
-       (S3DMaster. "smd/chip_cms.wrl" 0.05 0.0))))) ;; FIXME
+       (S3DMaster. "smd/chip_cms.wrl" 0.05 0.0)))))
+;; FIXME
 
 (defn footprint-sot-23 [m-name Z G X Y C E]
   (grid-syms
@@ -100,9 +51,12 @@
         m-name
         (make-text-reference [0 0] m-name)
         (make-text-value [0 0] "VAL**")
-        (draw-box 21 *silkscreen-width*
-                  (stretch-box (div-to-int *silkscreen-width* 2)
-                               (bounding-box (map pad-corners pads))))
+        (binding [*grid-size* grid-size-small]
+          (doall
+           (draw-box 21 *silkscreen-width*
+                     (map round-point-to-grid-outwards
+                          (stretch-box (div-to-int *silkscreen-width* 2)
+                                       (bounding-box (mapcat pad-corners pads)))))))
         pads
         (S3DMaster. "smd/SOT23_6.wrl" 0.11 -180.0))))))
 
@@ -112,26 +66,26 @@
 (def IPC-resistors-chip
   (Library.
    (list
-    (footprint-sm "RESC-1005-[0402]-IPC-100A" (mm 2.20) (mm 0.40) (mm 0.70))
-    (footprint-sm "RESC-1608-[0603]-IPC-101A" (mm 2.80) (mm 0.60) (mm 1.00))
-    (footprint-sm "RESC-2012-[0805]-IPC-102A" (mm 3.20) (mm 0.60) (mm 1.50))
-    (footprint-sm "RESC-3216-[1206]-IPC-103A" (mm 4.40) (mm 1.20) (mm 1.80))
-    (footprint-sm "RESC-3225-[1210]-IPC-104A" (mm 4.40) (mm 1.20) (mm 2.70))
-    (footprint-sm "RESC-5025-[2010]-IPC-105A" (mm 6.20) (mm 2.60) (mm 2.70))
-    (footprint-sm "RESC-6332-[2512]-IPC-106A" (mm 7.40) (mm 3.80) (mm 3.20)))))
+    (footprint-sm "RESC-1005-[0402]-IPC-100A" (mm 2.20) (mm 0.40) (mm 0.70) (mm 0.90) (mm 1.30))
+    (footprint-sm "RESC-1608-[0603]-IPC-101A" (mm 2.80) (mm 0.60) (mm 1.00) (mm 1.10) (mm 1.70))
+    (footprint-sm "RESC-2012-[0805]-IPC-102A" (mm 3.20) (mm 0.60) (mm 1.50) (mm 1.30) (mm 1.90))
+    (footprint-sm "RESC-3216-[1206]-IPC-103A" (mm 4.40) (mm 1.20) (mm 1.80) (mm 1.60) (mm 2.80))
+    (footprint-sm "RESC-3225-[1210]-IPC-104A" (mm 4.40) (mm 1.20) (mm 2.70) (mm 1.60) (mm 2.80))
+    (footprint-sm "RESC-5025-[2010]-IPC-105A" (mm 6.20) (mm 2.60) (mm 2.70) (mm 1.80) (mm 4.40))
+    (footprint-sm "RESC-6332-[2512]-IPC-106A" (mm 7.40) (mm 3.80) (mm 3.20) (mm 1.80) (mm 5.60)))))
 
                                         ; 8.2 Chip Capacitors
 (def IPC-capacitors-chip
   (Library.
    (list
-    (footprint-sm "CAPC-1005-[0402]-IPC-130A" (mm 2.20) (mm 0.40) (mm 0.70))
-    (footprint-sm "CAPC-1310-[0504]-IPC-131A" (mm 2.40) (mm 0.40) (mm 1.30))
-    (footprint-sm "CAPC-1608-[0603]-IPC-132A" (mm 2.80) (mm 0.60) (mm 1.00))
-    (footprint-sm "CAPC-2012-[0805]-IPC-133A" (mm 3.20) (mm 0.60) (mm 1.50))
-    (footprint-sm "CAPC-3216-[1206]-IPC-134A" (mm 4.40) (mm 1.20) (mm 1.80))
-    (footprint-sm "CAPC-3225-[1210]-IPC-135A" (mm 4.40) (mm 1.20) (mm 2.70))
-    (footprint-sm "CAPC-4532-[1812]-IPC-136A" (mm 5.80) (mm 2.00) (mm 3.40))
-    (footprint-sm "CAPC-4564-[1825]-IPC-137A" (mm 5.80) (mm 2.00) (mm 6.80)))))
+    (footprint-sm "CAPC-1005-[0402]-IPC-130A" (mm 2.20) (mm 0.40) (mm 0.70) (mm 0.90) (mm 1.30))
+    (footprint-sm "CAPC-1310-[0504]-IPC-131A" (mm 2.40) (mm 0.40) (mm 1.30) (mm 1.00) (mm 1.40))
+    (footprint-sm "CAPC-1608-[0603]-IPC-132A" (mm 2.80) (mm 0.60) (mm 1.00) (mm 1.10) (mm 1.70))
+    (footprint-sm "CAPC-2012-[0805]-IPC-133A" (mm 3.20) (mm 0.60) (mm 1.50) (mm 1.30) (mm 1.90))
+    (footprint-sm "CAPC-3216-[1206]-IPC-134A" (mm 4.40) (mm 1.20) (mm 1.80) (mm 1.60) (mm 2.80))
+    (footprint-sm "CAPC-3225-[1210]-IPC-135A" (mm 4.40) (mm 1.20) (mm 2.70) (mm 1.60) (mm 2.80))
+    (footprint-sm "CAPC-4532-[1812]-IPC-136A" (mm 5.80) (mm 2.00) (mm 3.40) (mm 1.90) (mm 3.90))
+    (footprint-sm "CAPC-4564-[1825]-IPC-137A" (mm 5.80) (mm 2.00) (mm 6.80) (mm 1.90) (mm 3.90)))))
 
                                         ; 8.6 SOT 23
 (def IPC-SOT-23

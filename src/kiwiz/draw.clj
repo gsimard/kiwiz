@@ -1,6 +1,8 @@
 (ns kiwiz.draw
   (:use kiwiz.grid kiwiz.module))
 
+(defn rotate [n s]
+  (take (count s) (drop n (cycle s))))
 
 ;; returns the four points outside a given pad taking line width into account
 ;; goes from quadrant 1 (+,+) to quadrant 4 (+,-) ccw (increasing math angle)
@@ -17,10 +19,10 @@
      (point-add pos-xy [(+ half-width) (- half-height)]))))
 
 (defn bounding-box [points]
-  (let [x-min (min (map first points))
-        x-max (max (map first points))
-        y-min (min (map second points))
-        y-max (max (map second points))]
+  (let [x-min (apply min (map first points))
+        x-max (apply max (map first points))
+        y-min (apply min (map second points))
+        y-max (apply max (map second points))]
     (list
      [x-max y-max]
      [x-min y-max]

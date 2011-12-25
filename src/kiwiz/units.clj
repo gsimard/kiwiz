@@ -46,8 +46,3 @@
 (defn to-inches [n]
   {:pre [(number? n)]}
   (/ n 25400000))
-
-
-
-
-
